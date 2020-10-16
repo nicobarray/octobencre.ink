@@ -2,7 +2,8 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import Head from 'next/head'
 import styled from 'styled-components'
-import { Col, Container, Row } from 'react-bootstrap'
+import { Col, Container, Row, Spinner } from 'react-bootstrap'
+import dynamic from 'next/dynamic'
 
 const Text = styled.div`
   background: black;
@@ -78,55 +79,16 @@ const themes = [
   'Pomme de pain',
 ]
 
-const Shame = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-`
-const Image = styled.img`
+const DayImagePlaceholder = styled.img`
   width: 100%;
+  margin-bottom: 32px;
+  background: black;
 `
 
-const DayImage = ({ day, trigram, setSrc }) => {
-  const src = '/' + trigram + '/octobencre2020-' + (day + 1) + '.jpg'
-  const [error, setError] = React.useState(null)
+const DayImage = dynamic(() => import('../components/day-image'), {
+  loading: () => <DayImagePlaceholder src={'/lae/octobencre2020-15.jpg'} />,
+})
 
-  // * Trigger client-side rendering because the img.onError callback
-  // * is not call server-side.
-  React.useEffect(() => {
-    if (day <= new Date().getDate() - 3) {
-      return
-    }
-
-    async function showShame() {
-      const res = await fetch(src)
-      console.log(res.status)
-      if (res.status === 404) {
-        throw new Error('shame')
-      }
-    }
-
-    showShame().catch(() => setError(true))
-  }, [src])
-
-  return (
-    <Col xs={12} md={3}>
-      {error ? (
-        <Shame>🔔</Shame>
-      ) : (
-        <Image
-          src={src}
-          alt="octobencre"
-          onClick={() => setSrc(src)}
-          onError={() => {
-            console.log('Test')
-            setError(true)
-          }}
-        />
-      )}
-    </Col>
-  )
-}
 const Day = ({ day, setSrc }) => {
   return (
     <>
@@ -138,7 +100,6 @@ const Day = ({ day, setSrc }) => {
         <DayImage day={day} trigram="nby" setSrc={setSrc} />
         <DayImage day={day} trigram="lae" setSrc={setSrc} />
       </Row>
-      <div style={{ height: 32 }} />
     </>
   )
 }
