@@ -113,25 +113,24 @@ export default function Page() {
         <title>Octobencre 2020</title>
       </Head>
 
-      <Row>
-        <Col>
-          <Title>Octobencre 2020</Title>
-        </Col>
-      </Row>
-
       <Container fluid>
+        <Row>
+          <Col>
+            <Title>Octobencre 2020</Title>
+          </Col>
+        </Row>
         <Row>
           <Col xs={12} md={2}>
             <Text>Fait par</Text>
           </Col>
           <Col xs={12} md={3}>
             <Author>
-              <a href="https://www.twitter.com/nicobarray">nicobarray</a>
+              <a href="https://www.twitter.com/nicobarray">@nicobarray</a>
             </Author>
           </Col>
           <Col xs={12} md={3}>
             <Author>
-              <a href="https://twitter.com/LouisAumaitre">Louis Aumaitre</a>
+              <a href="https://twitter.com/LouisAumaitre">@LouisAumaitre</a>
             </Author>
           </Col>
           <Col xs={12} md={3}></Col>
