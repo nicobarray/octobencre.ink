@@ -99,6 +99,7 @@ const Day = ({ day, setSrc }) => {
         </Col>
         <DayImage day={day} trigram="nby" setSrc={setSrc} />
         <DayImage day={day} trigram="lae" setSrc={setSrc} />
+        <DayImage day={day} trigram="idt" setSrc={setSrc} />
       </Row>
     </>
   )
@@ -131,6 +132,11 @@ export default function Page() {
           <Col xs={12} md={3}>
             <Author>
               <a href="https://twitter.com/LouisAumaitre">@LouisAumaitre</a>
+            </Author>
+          </Col>
+          <Col xs={12} md={3}>
+            <Author>
+              <a href="https://twitter.com/IDelaunet">@IDelaunet</a>
             </Author>
           </Col>
           <Col xs={12} md={3}></Col>
