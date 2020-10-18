@@ -44,7 +44,7 @@ const Modal = styled.div`
 const range = (n: number): number[] => {
   return [...new Array(n).keys()].reverse()
 }
-const days = range(15)
+const days = range(17)
 const themes = [
   'Brume',
   'Antique',
