@@ -119,7 +119,7 @@ const Day = ({ artworks, day, setPreviewSrc }) => {
 
 function getDays() {
   const latestOctoberDay =
-    new Date().getMonth() === 9 ? new Date().getDate() : 31
+    new Date().getMonth() === 9 ? new Date().getDate() + 1 : 31
   return range(latestOctoberDay)
 }
 
