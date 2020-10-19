@@ -1,10 +1,11 @@
 import React from 'react'
-import ReactDOM from 'react-dom'
 import Head from 'next/head'
 import styled from 'styled-components'
 import { Col, Container, Row, Spinner } from 'react-bootstrap'
-import dynamic from 'next/dynamic'
 
+const range = (n: number): number[] => {
+  return [...new Array(n).keys()].reverse()
+}
 const Text = styled.div`
   background: black;
   color: white;
@@ -41,10 +42,6 @@ const Modal = styled.div`
   background-size: contain;
 `
 
-const range = (n: number): number[] => {
-  return [...new Array(n).keys()].reverse()
-}
-const days = range(17)
 const themes = [
   'Brume',
   'Antique',
@@ -85,28 +82,88 @@ const DayImagePlaceholder = styled.img`
   background: black;
 `
 
-const DayImage = dynamic(() => import('../components/day-image'), {
-  loading: () => <DayImagePlaceholder src={'/lae/octobencre2020-15.jpg'} />,
-})
+const Drawing = styled.img`
+  width: 100%;
+  margin-bottom: 32px;
+`
 
-const Day = ({ day, setSrc }) => {
+export const DailyImage = ({ src, setPreviewSrc }) => {
+  return (
+    <Col xs={12} md={3}>
+      <Drawing src={src} onClick={() => setPreviewSrc(src)} />
+    </Col>
+  )
+}
+
+const Day = ({ artworks, day, setPreviewSrc }) => {
   return (
     <>
       <Row>
         <Col xs={12} md={2}>
-          <Text>Jour {day + 1}</Text>
-          <Subtext>{themes[day]}</Subtext>
+          <Text>Jour {day}</Text>
+          <Subtext>{themes[day - 1]}</Subtext>
         </Col>
-        <DayImage day={day} trigram="nby" setSrc={setSrc} />
-        <DayImage day={day} trigram="lae" setSrc={setSrc} />
-        <DayImage day={day} trigram="idt" setSrc={setSrc} />
+        {artworks.map((artwork) => {
+          return (
+            <DailyImage
+              key={artwork.trigram}
+              src={artwork.src}
+              setPreviewSrc={setPreviewSrc}
+            />
+          )
+        })}
       </Row>
     </>
   )
 }
 
-export default function Page() {
+function getDays() {
+  const latestOctoberDay =
+    new Date().getMonth() === 9 ? new Date().getDate() : 31
+  return range(latestOctoberDay)
+}
+
+async function fetchData() {
+  const days = getDays()
+  const trigrams = ['nby', 'lae', 'idt']
+  const payloads = []
+  for (let day of days) {
+    const artworks = []
+    for (let trigram of trigrams) {
+      const response = await fetch(
+        'http://localhost:3000/api/artists/' +
+          trigram +
+          '/day-of-the-month/' +
+          day
+      )
+      const src = await response.text()
+      artworks.push({ src, trigram, day })
+    }
+    payloads.push(artworks)
+  }
+
+  return days
+    .map((day) => payloads[day])
+    .sort((dayA, dayB) => dayB[0].day - dayA[0].day)
+}
+
+export default function Page({ serverData }) {
   const [src, setSrc] = React.useState(null)
+  const [data, setData] = React.useState(() => serverData)
+
+  React.useEffect(() => {
+    async function fetchInitialStateClientSide() {
+      const initialData = await fetchData()
+      setData(initialData)
+    }
+
+    if (!data) {
+      console.log('[fetchData] Fetching src client-side...')
+      fetchInitialStateClientSide()
+    } else {
+      console.log('[fetchData] Image src are hydrated server-side')
+    }
+  }, [])
 
   return (
     <>
@@ -142,12 +199,36 @@ export default function Page() {
           <Col xs={12} md={3}></Col>
         </Row>
         <div style={{ height: 32 }} />
+        {data?.map((artworks, dayMinusOne) => {
+          const day = artworks[0].day ?? data.length - 1 - dayMinusOne
+          if (day === 0) {
+            return null
+          }
 
-        {days.map((day) => {
-          return <Day key={day} day={day} setSrc={setSrc} />
+          return (
+            <Day
+              key={dayMinusOne}
+              day={day}
+              artworks={artworks}
+              setPreviewSrc={setSrc}
+            />
+          )
         })}
       </Container>
       {src && <Modal src={src} onClick={() => setSrc(null)} />}
     </>
   )
+}
+
+export async function getServerSideProps({ query }) {
+  if (query.ssr === 'false') {
+    return { props: {} }
+  }
+
+  const serverData = await fetchData()
+  return {
+    props: {
+      serverData,
+    },
+  }
 }
