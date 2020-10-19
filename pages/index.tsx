@@ -2,6 +2,7 @@ import React from 'react'
 import Head from 'next/head'
 import styled from 'styled-components'
 import { Col, Container, Row } from 'react-bootstrap'
+import { twentyTwentyThemes } from '../core/theme'
 
 const range = (n: number): number[] => {
   return [...new Array(n).keys()].reverse()
@@ -42,46 +43,6 @@ const Modal = styled.div`
   background-size: contain;
 `
 
-const themes = [
-  'Brume',
-  'Antique',
-  'Frange',
-  'Perdu',
-  'Clef',
-  'Argent',
-  'Confus',
-  'Familier',
-  'Tranche',
-  'Dégoulinant',
-  'Corde',
-  'Fané',
-  'Cuir',
-  'Pente',
-  'Ovale',
-  'Temple',
-  'Antenne',
-  'Plante',
-  'Pale',
-  'Minéral',
-  'Auteur',
-  'Académique',
-  'Superstitieux',
-  'Bulle',
-  'Code',
-  'Chaudron',
-  'Traîne',
-  'Reste',
-  'Mains',
-  'Encore',
-  'Pomme de pain',
-]
-
-const DayImagePlaceholder = styled.img`
-  width: 100%;
-  margin-bottom: 32px;
-  background: black;
-`
-
 const Drawing = styled.img`
   width: 100%;
   margin-bottom: 32px;
@@ -101,7 +62,7 @@ const Day = ({ artworks, day, setPreviewSrc }) => {
       <Row>
         <Col xs={12} md={2}>
           <Text>Jour {day}</Text>
-          <Subtext>{themes[day - 1]}</Subtext>
+          <Subtext>{twentyTwentyThemes[day - 1]}</Subtext>
         </Col>
         {artworks.map((artwork) => {
           return (
@@ -136,9 +97,11 @@ async function fetchData() {
   for (let day of days) {
     const artworks = []
     for (let trigram of trigrams) {
-      const response = await fetch(
+      const route =
         getEndpoint() + '/api/artists/' + trigram + '/day-of-the-month/' + day
-      )
+
+      console.log(route)
+      const response = await fetch(route)
       const src = await response.text()
       artworks.push({ src, trigram, day })
     }
@@ -167,6 +130,8 @@ export default function Page({ serverData }) {
       console.log('[fetchData] Image src are hydrated server-side')
     }
   }, [])
+
+  console.log(serverData)
 
   return (
     <>
