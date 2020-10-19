@@ -56,61 +56,44 @@ export const DailyImage = ({ src, setPreviewSrc }) => {
   )
 }
 
-const Day = ({ artworks, day, setPreviewSrc }) => {
+function getLastDay() {
+  return new Date().getMonth() === 9 ? new Date().getDate() : 31
+}
+
+function getPublicEndpoint() {
+  if (typeof window === 'undefined') {
+    return process.env.NODE_ENV === 'production'
+      ? 'https://octobencre.ink'
+      : 'http://localhost:3000'
+  }
+
   return (
-    <>
-      <Row>
-        <Col xs={12} md={2}>
-          <Text>Jour {day}</Text>
-          <Subtext>{twentyTwentyThemes[day - 1]}</Subtext>
-        </Col>
-        {artworks.map((artwork) => {
-          return (
-            <DailyImage
-              key={artwork.trigram}
-              src={artwork.src}
-              setPreviewSrc={setPreviewSrc}
-            />
-          )
-        })}
-      </Row>
-    </>
+    window.location.protocol +
+    '//' +
+    window.location.hostname +
+    ':' +
+    window.location.port
   )
 }
 
-function getDays() {
-  const latestOctoberDay =
-    new Date().getMonth() === 9 ? new Date().getDate() + 1 : 31
-  return range(latestOctoberDay)
-}
-
-function getEndpoint() {
-  return process.env.NODE_ENV === 'production'
-    ? 'https://octobencre.ink'
-    : 'http://localhost:3000'
-}
-
 async function fetchData() {
-  const days = getDays()
-  const trigrams = ['nby', 'lae', 'idt']
-  const payloads = []
-  for (let day of days) {
-    const artworks = []
-    for (let trigram of trigrams) {
-      const route =
-        getEndpoint() + '/api/artists/' + trigram + '/day-of-the-month/' + day
+  const lastDay = getLastDay()
 
-      console.log(route)
-      const response = await fetch(route)
-      const src = await response.text()
-      artworks.push({ src, trigram, day })
-    }
-    payloads.push(artworks)
+  try {
+    const publicEndpoint = getPublicEndpoint()
+    const data = await fetch(publicEndpoint + '/octobencre2020.json')
+    const manifest = await data.json()
+
+    // * remove future days
+    manifest.days = manifest.days
+      .filter((dayData) => dayData.day <= lastDay)
+      .reverse()
+
+    return manifest
+  } catch (err) {
+    console.log(err)
+    return {}
   }
-
-  return days
-    .map((day) => payloads[day])
-    .sort((dayA, dayB) => dayB[0].day - dayA[0].day)
 }
 
 export default function Page({ serverData }) {
@@ -167,19 +150,23 @@ export default function Page({ serverData }) {
           <Col xs={12} md={3}></Col>
         </Row>
         <div style={{ height: 32 }} />
-        {data?.map((artworks, dayMinusOne) => {
-          const day = artworks[0].day ?? data.length - 1 - dayMinusOne
-          if (day === 0) {
-            return null
-          }
-
+        {data?.days?.map(({ day, drawings }) => {
           return (
-            <Day
-              key={dayMinusOne}
-              day={day}
-              artworks={artworks}
-              setPreviewSrc={setSrc}
-            />
+            <Row key={day}>
+              <Col xs={12} md={2}>
+                <Text>Jour {day}</Text>
+                <Subtext>{twentyTwentyThemes[day - 1]}</Subtext>
+              </Col>
+              {data.who.map((trigram) => {
+                return (
+                  <DailyImage
+                    key={trigram}
+                    src={drawings[trigram]}
+                    setPreviewSrc={setSrc}
+                  />
+                )
+              })}
+            </Row>
           )
         })}
       </Container>
