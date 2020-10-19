@@ -1,7 +1,7 @@
 import React from 'react'
 import Head from 'next/head'
 import styled from 'styled-components'
-import { Col, Container, Row, Spinner } from 'react-bootstrap'
+import { Col, Container, Row } from 'react-bootstrap'
 
 const range = (n: number): number[] => {
   return [...new Array(n).keys()].reverse()
@@ -123,6 +123,12 @@ function getDays() {
   return range(latestOctoberDay)
 }
 
+function getEndpoint() {
+  return process.env.NODE_ENV === 'production'
+    ? 'https://octobencre.ink'
+    : 'http://localhost:3000'
+}
+
 async function fetchData() {
   const days = getDays()
   const trigrams = ['nby', 'lae', 'idt']
@@ -131,10 +137,7 @@ async function fetchData() {
     const artworks = []
     for (let trigram of trigrams) {
       const response = await fetch(
-        'http://localhost:3000/api/artists/' +
-          trigram +
-          '/day-of-the-month/' +
-          day
+        getEndpoint() + '/api/artists/' + trigram + '/day-of-the-month/' + day
       )
       const src = await response.text()
       artworks.push({ src, trigram, day })
