@@ -15,7 +15,9 @@ export default async function resolver(
     res.setHeader('content-type', 'application/json')
     if (
       await pathExists(
-        path.join(serverRuntimeConfig.PROJECT_ROOT, 'public', imagePath)
+        process.env.NODE_ENV === 'production'
+          ? path.join(serverRuntimeConfig.PROJECT_ROOT, imagePath)
+          : path.join(serverRuntimeConfig.PROJECT_ROOT, 'public', imagePath)
       )
     ) {
       res.send(imagePath)
