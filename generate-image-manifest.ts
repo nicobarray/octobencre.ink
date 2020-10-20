@@ -1,6 +1,39 @@
 import { join } from 'path'
 import { ensureFile, pathExists, writeJSON } from 'fs-extra'
-import { twentyTwentyThemes } from './core/theme'
+
+const themes = [
+  'Brume',
+  'Antique',
+  'Frange',
+  'Perdu',
+  'Clef',
+  'Argent',
+  'Confus',
+  'Familier',
+  'Tranche',
+  'Dégoulinant',
+  'Corde',
+  'Fané',
+  'Cuir',
+  'Pente',
+  'Ovale',
+  'Temple',
+  'Antenne',
+  'Plante',
+  'Pale',
+  'Minéral',
+  'Auteur',
+  'Académique',
+  'Superstitieux',
+  'Bulle',
+  'Code',
+  'Chaudron',
+  'Traîne',
+  'Reste',
+  'Mains',
+  'Encore',
+  'Pomme de pain',
+]
 
 async function main() {
   const imagePath = (trigram, day) =>
@@ -11,7 +44,7 @@ async function main() {
   const manifest = {
     when: 'october 2020',
     who: artists,
-    days: twentyTwentyThemes.map((theme, i) => ({
+    days: themes.map((theme, i) => ({
       theme,
       day: i + 1,
       drawings: {},

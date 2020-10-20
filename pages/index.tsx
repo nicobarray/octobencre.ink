@@ -2,11 +2,7 @@ import React from 'react'
 import Head from 'next/head'
 import styled from 'styled-components'
 import { Col, Container, Row } from 'react-bootstrap'
-import { twentyTwentyThemes } from '../core/theme'
 
-const range = (n: number): number[] => {
-  return [...new Array(n).keys()].reverse()
-}
 const Text = styled.div`
   background: black;
   color: white;
@@ -87,6 +83,30 @@ async function fetchData() {
     // * remove future days
     manifest.days = manifest.days
       .filter((dayData) => dayData.day <= lastDay)
+      .map((dayData) => {
+        if (dayData.day === lastDay) {
+          const getSrc = (src) => {
+            if (src === '/shame.png') {
+              return '/waiting.gif'
+            }
+            return src
+          }
+
+          const drawings = Object.keys(dayData.drawings).reduce(
+            (srcs, trigram) => ({
+              ...srcs,
+              [trigram]: getSrc(dayData.drawings[trigram]),
+            }),
+            {}
+          )
+
+          return {
+            ...dayData,
+            drawings,
+          }
+        }
+        return dayData
+      })
       .reverse()
 
     return manifest
@@ -150,12 +170,12 @@ export default function Page({ serverData }) {
           <Col xs={12} md={3}></Col>
         </Row>
         <div style={{ height: 32 }} />
-        {data?.days?.map(({ day, drawings }) => {
+        {data?.days?.map(({ theme, day, drawings }) => {
           return (
             <Row key={day}>
               <Col xs={12} md={2}>
                 <Text>Jour {day}</Text>
-                <Subtext>{twentyTwentyThemes[day - 1]}</Subtext>
+                <Subtext>{theme}</Subtext>
               </Col>
               {data.who.map((trigram) => {
                 return (
