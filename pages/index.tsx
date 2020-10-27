@@ -1,5 +1,7 @@
 import React from 'react'
 import Head from 'next/head'
+import Image from 'next/image'
+
 import styled from 'styled-components'
 import { Col, Container, Row } from 'react-bootstrap'
 
@@ -39,7 +41,7 @@ const Modal = styled.div`
   background-size: contain;
 `
 
-const Drawing = styled.img`
+const Drawing = styled(Image).attrs({ unsized: true })`
   width: 100%;
   margin-bottom: 32px;
 `
@@ -133,8 +135,6 @@ export default function Page({ serverData }) {
       console.log('[fetchData] Image src are hydrated server-side')
     }
   }, [])
-
-  console.log(serverData)
 
   return (
     <>
