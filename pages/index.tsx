@@ -43,7 +43,7 @@ const Modal = styled.div`
   background-size: contain;
 `
 
-export const DailyImage = ({ drawing, setPreviewSrc }) => {
+export const DailyImage = ({ alt, drawing, setPreviewSrc }) => {
   const { src, width, height } = drawing
 
   return (
@@ -58,6 +58,7 @@ export const DailyImage = ({ drawing, setPreviewSrc }) => {
         }}
         width={width}
         height={height}
+        alt={alt}
       />
       <div style={{ height: 32 }} />
     </Col>
@@ -137,6 +138,9 @@ export default function Page() {
               {updatedData.who.map((trigram) => {
                 return (
                   <DailyImage
+                    alt={
+                      'Dessin de ' + trigram + ' du ' + day + ' octobre 2020'
+                    }
                     key={trigram}
                     drawing={drawings[trigram]}
                     setPreviewSrc={setSrc}
