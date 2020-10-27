@@ -1,5 +1,6 @@
 import { join } from 'path'
 import { ensureFile, pathExists, writeJSON } from 'fs-extra'
+import sizeOf from 'image-size'
 
 const themes = [
   'Brume',
@@ -44,27 +45,38 @@ async function main() {
   const manifest = {
     when: 'october 2020',
     who: artists,
-    days: themes.map((theme, i) => ({
-      theme,
-      day: i + 1,
-      drawings: {},
-    })),
+    days: themes
+      .map((theme, i) => ({
+        theme,
+        day: i + 1,
+        drawings: {},
+      }))
+      .reverse(),
+    waiting: sizeOf(join(__dirname, 'public', 'waiting.gif')),
   }
 
   for (let day of manifest.days) {
     for (let trigram of artists) {
-      const hasDrawing = await pathExists(imagePath(trigram, day.day))
+      const drawingPath = imagePath(trigram, day.day)
+      console.log('Writing metadata for ' + drawingPath)
+
+      const hasDrawing = await pathExists(drawingPath)
       if (hasDrawing) {
-        day.drawings[trigram] =
-          '/' + trigram + '/' + 'octobencre2020-' + day.day + '.jpg'
+        const drawingSize = sizeOf(drawingPath)
+        day.drawings[trigram] = {
+          src: '/' + trigram + '/' + 'octobencre2020-' + day.day + '.jpg',
+          ...drawingSize,
+        }
       } else {
-        day.drawings[trigram] = '/shame.png'
+        const shamePath = join(__dirname, '/public', 'shame.png')
+        const shameSize = sizeOf(shamePath)
+        day.drawings[trigram] = { src: '/shame.png', ...shameSize }
       }
     }
   }
 
-  await ensureFile(join(__dirname, 'public', 'octobencre2020.json'))
-  await writeJSON(join(__dirname, 'public', 'octobencre2020.json'), manifest)
+  await ensureFile(join(__dirname, 'generated', 'drawings.json'))
+  await writeJSON(join(__dirname, 'generated', 'drawings.json'), manifest)
 }
 
 main().catch((err) => console.log('Script failed : ' + err))

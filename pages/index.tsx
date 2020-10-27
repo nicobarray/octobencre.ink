@@ -5,6 +5,8 @@ import Image from 'next/image'
 import styled from 'styled-components'
 import { Col, Container, Row } from 'react-bootstrap'
 
+import data from '../generated/drawings.json'
+
 const Text = styled.div`
   background: black;
   color: white;
@@ -41,15 +43,23 @@ const Modal = styled.div`
   background-size: contain;
 `
 
-const Drawing = styled(Image).attrs({ unsized: true })`
-  width: 100%;
-  margin-bottom: 32px;
-`
+export const DailyImage = ({ drawing, setPreviewSrc }) => {
+  const { src, width, height } = drawing
 
-export const DailyImage = ({ src, setPreviewSrc }) => {
   return (
     <Col xs={12} md={3}>
-      <Drawing src={src} onClick={() => setPreviewSrc(src)} />
+      <Image
+        src={src}
+        onClick={() => {
+          if (src.endsWith('waiting.gif') || src.endsWith('shame.png')) {
+            return
+          }
+          setPreviewSrc(src)
+        }}
+        width={width}
+        height={height}
+      />
+      <div style={{ height: 32 }} />
     </Col>
   )
 }
@@ -58,83 +68,30 @@ function getLastDay() {
   return new Date().getMonth() === 9 ? new Date().getDate() : 31
 }
 
-function getPublicEndpoint() {
-  if (typeof window === 'undefined') {
-    return process.env.NODE_ENV === 'production'
-      ? 'https://octobencre.ink'
-      : 'http://localhost:3000'
-  }
-
-  return (
-    window.location.protocol +
-    '//' +
-    window.location.hostname +
-    ':' +
-    window.location.port
-  )
-}
-
-async function fetchData() {
+export default function Page() {
+  const [src, setSrc] = React.useState(null)
   const lastDay = getLastDay()
 
-  try {
-    const publicEndpoint = getPublicEndpoint()
-    const data = await fetch(publicEndpoint + '/octobencre2020.json')
-    const manifest = await data.json()
-
-    // * remove future days
-    manifest.days = manifest.days
-      .filter((dayData) => dayData.day <= lastDay)
+  // Replace missing drawing on the last day with a waiting gif.
+  const updatedData = {
+    ...data,
+    days: data.days
+      .filter(({ day }) => day <= lastDay)
       .map((dayData) => {
         if (dayData.day === lastDay) {
-          const getSrc = (src) => {
-            if (src === '/shame.png') {
-              return '/waiting.gif'
+          for (let trigram of data.who) {
+            if (dayData.drawings[trigram].src.endsWith('shame.png')) {
+              dayData.drawings[trigram] = {
+                src: '/waiting.gif',
+                ...data.waiting,
+              }
             }
-            return src
-          }
-
-          const drawings = Object.keys(dayData.drawings).reduce(
-            (srcs, trigram) => ({
-              ...srcs,
-              [trigram]: getSrc(dayData.drawings[trigram]),
-            }),
-            {}
-          )
-
-          return {
-            ...dayData,
-            drawings,
           }
         }
+
         return dayData
-      })
-      .reverse()
-
-    return manifest
-  } catch (err) {
-    console.log(err)
-    return {}
+      }),
   }
-}
-
-export default function Page({ serverData }) {
-  const [src, setSrc] = React.useState(null)
-  const [data, setData] = React.useState(() => serverData)
-
-  React.useEffect(() => {
-    async function fetchInitialStateClientSide() {
-      const initialData = await fetchData()
-      setData(initialData)
-    }
-
-    if (!data) {
-      console.log('[fetchData] Fetching src client-side...')
-      fetchInitialStateClientSide()
-    } else {
-      console.log('[fetchData] Image src are hydrated server-side')
-    }
-  }, [])
 
   return (
     <>
@@ -170,18 +127,18 @@ export default function Page({ serverData }) {
           <Col xs={12} md={3}></Col>
         </Row>
         <div style={{ height: 32 }} />
-        {data?.days?.map(({ theme, day, drawings }) => {
+        {updatedData.days.map(({ theme, day, drawings }) => {
           return (
             <Row key={day}>
               <Col xs={12} md={2}>
                 <Text>Jour {day}</Text>
                 <Subtext>{theme}</Subtext>
               </Col>
-              {data.who.map((trigram) => {
+              {updatedData.who.map((trigram) => {
                 return (
                   <DailyImage
                     key={trigram}
-                    src={drawings[trigram]}
+                    drawing={drawings[trigram]}
                     setPreviewSrc={setSrc}
                   />
                 )
@@ -193,17 +150,4 @@ export default function Page({ serverData }) {
       {src && <Modal src={src} onClick={() => setSrc(null)} />}
     </>
   )
-}
-
-export async function getServerSideProps({ query }) {
-  if (query.ssr === 'false') {
-    return { props: {} }
-  }
-
-  const serverData = await fetchData()
-  return {
-    props: {
-      serverData,
-    },
-  }
 }
