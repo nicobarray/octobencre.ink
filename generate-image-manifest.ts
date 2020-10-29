@@ -37,11 +37,32 @@ const themes = [
 ]
 
 async function main() {
-  const imagePath = (trigram, day) =>
-    join(__dirname, '/public', trigram, 'octobencre2020-' + day + '.jpg')
+  const imagePath = async (trigram, day) => {
+    let path = join(__dirname, '/public', trigram, 'octobencre2020-' + day)
+    const expectedExtensions = [".jpg", ".png"]
 
+    for (let ext of expectedExtensions) {
+      if (await pathExists(path + ext)) {
+        return path + ext
+      }
+    }
+
+    return join(__dirname, '/public', "/shame.png")
+  }
+  const getPublicPath = async (trigram, day) => {
+    let path = join(__dirname, '/public', trigram, 'octobencre2020-' + day)
+    const expectedExtensions = [".jpg", ".png"]
+
+    for (let ext of expectedExtensions) {
+      if (await pathExists(path + ext)) {
+        return '/' + trigram + '/' + 'octobencre2020-' + day + ext
+      }
+    }
+
+    return "/shame.png"
+  }
+  
   const artists = ['nby', 'lae', 'idt']
-
   const manifest = {
     when: 'october 2020',
     who: artists,
@@ -57,20 +78,12 @@ async function main() {
 
   for (let day of manifest.days) {
     for (let trigram of artists) {
-      const drawingPath = imagePath(trigram, day.day)
-      console.log('Writing metadata for ' + drawingPath)
-
-      const hasDrawing = await pathExists(drawingPath)
-      if (hasDrawing) {
-        const drawingSize = sizeOf(drawingPath)
-        day.drawings[trigram] = {
-          src: '/' + trigram + '/' + 'octobencre2020-' + day.day + '.jpg',
-          ...drawingSize,
-        }
-      } else {
-        const shamePath = join(__dirname, '/public', 'shame.png')
-        const shameSize = sizeOf(shamePath)
-        day.drawings[trigram] = { src: '/shame.png', ...shameSize }
+      const drawingPath = await imagePath(trigram, day.day)
+      const drawingSize = sizeOf(drawingPath)
+      const src = await getPublicPath(trigram, day.day)
+      day.drawings[trigram] = {
+        src,
+        ...drawingSize,
       }
     }
   }
