@@ -66,33 +66,17 @@ export const DailyImage = ({ alt, drawing, setPreviewSrc }) => {
 }
 
 function getLastDay() {
-  return new Date().getMonth() === 9 ? new Date().getDate() : 31
+  const now = new Date()
+  if (now.getMonth() === 9) {
+    return now.getDate()
+  }
+
+  return 31
 }
 
-export default function Page() {
+export default function Page({ data }) {
   const [src, setSrc] = React.useState(null)
-  const lastDay = getLastDay()
-
-  // Replace missing drawing on the last day with a waiting gif.
-  const updatedData = {
-    ...data,
-    days: data.days
-      .filter(({ day }) => day <= lastDay)
-      .map((dayData) => {
-        if (dayData.day === lastDay) {
-          for (let trigram of data.who) {
-            if (dayData.drawings[trigram].src.endsWith('shame.png')) {
-              dayData.drawings[trigram] = {
-                src: '/waiting.gif',
-                ...data.waiting,
-              }
-            }
-          }
-        }
-
-        return dayData
-      }),
-  }
+  const { days, who } = data
 
   return (
     <>
@@ -128,20 +112,20 @@ export default function Page() {
           <Col xs={12} md={3}></Col>
         </Row>
         <div style={{ height: 32 }} />
-        {updatedData.days.map(({ theme, day, drawings }) => {
+        {days.map(({ theme, day, drawings }) => {
           return (
             <Row key={day}>
               <Col xs={12} md={2}>
                 <Text>Jour {day}</Text>
                 <Subtext>{theme}</Subtext>
               </Col>
-              {updatedData.who.map((trigram) => {
+              {who.map((trigram) => {
                 return (
                   <DailyImage
+                    key={day + '-' + trigram}
                     alt={
                       'Dessin de ' + trigram + ' du ' + day + ' octobre 2020'
                     }
-                    key={trigram}
                     drawing={drawings[trigram]}
                     setPreviewSrc={setSrc}
                   />
@@ -154,4 +138,39 @@ export default function Page() {
       {src && <Modal src={src} onClick={() => setSrc(null)} />}
     </>
   )
+}
+
+export async function getStaticProps() {
+  const lastDay = getLastDay()
+
+  // Replace missing drawing on the last day with a waiting gif.
+  const updatedData = {
+    ...data,
+    days: data.days
+      .filter(({ day }) => day <= lastDay)
+      .map((dayData) => {
+        if (dayData.day === lastDay) {
+          for (let trigram of data.who) {
+            if (dayData.drawings[trigram].src.endsWith('shame.png')) {
+              dayData.drawings[trigram] = {
+                src: '/waiting.gif',
+                ...data.waiting,
+              }
+            }
+          }
+        }
+
+        return dayData
+      }),
+  }
+
+  return {
+    props: {
+      data: updatedData,
+    },
+    // Next.js will attempt to re-generate the page:
+    // - When a request comes in
+    // - At most once every second
+    revalidate: 1, // In seconds
+  }
 }
